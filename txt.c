@@ -176,7 +176,11 @@ void editcaret(Fctx_t* ctx){
 }
 
 void filecaret(Fctx_t* ctx){
-	printf("\n[file (%s)] > Open File: ",ctx->filepath);
+	if(ctx->filepath){
+		printf("\n[file (%s)] > Open File: ",ctx->filepath);
+	}else{
+		printf("\n[file] > Open File: ");
+	}
 }
 
 void appendcaret(Fctx_t* ctx){
@@ -285,8 +289,11 @@ int CloseContext(Fctx_t* ctx){
 		return ERROR_NULLCTX; // Null Context
 	}
 
-	fclose(ctx->file);
-	ctx->file = NULL;
+	if(ctx->file){
+		fclose(ctx->file);
+		ctx->file = NULL;
+	}
+
 	if(ctx->linebuf){
 		freelinebuf(&ctx->linebuf,ctx->linebuf_size);
 	}
@@ -414,37 +421,16 @@ int Display(Fctx_t* ctx){
 int main(int argc, char** argv){
 	// read args
 
-	if(OpenContext(&Main,"test.txt","r+")){
-		printf("Error: Unable to open Context\n");
-		return -1;
-	}
-
 	// Text Edit Loop
-	//
-	
-	if(FetchLines(&Main)){
-		printf("Error: Unable to fetch Context\n");
-		if(CloseContext(&Main)){
-			printf("Error: Unable to close Context\n");
-		}
-		return -1;
-	}
 
 	int loop = 1;
-	Main.linenum = 0;
-	mode = MODE_MOVE;
+	mode = MODE_FILE;
 	editmode = 0; // 0 - insert, 1 - append;
-	if(Display(&Main)){
-		printf("Error: Unable to Display Context\n");
-		if(CloseContext(&Main)){
-			printf("Error: Unable to close Context\n");
-		}
-		return -1;
-	}
-	movecaret(&Main);
+	filecaret(&Main);
 	
 	char* filestr = NULL;
 	int filestrlen = 0;
+
 	while(loop){
 		char c = fgetc(stdin);
 		switch(mode){

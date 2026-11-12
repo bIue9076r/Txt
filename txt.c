@@ -123,6 +123,44 @@ line_t* lineAppend(line_t* lb, int* size, char* b, int s){
 	return tmp;
 }
 
+line_t* lineInsert(line_t* lb, int* size, char* b, int s, int n){
+	line_t* tmp = NULL;
+	int tmp_size = 0;
+
+	for(int i = 0; (i < n) && (i < *size); i++){
+		tmp = lineAppend(tmp,&tmp_size,lb[i].buffer,lb[i].size);
+	}
+	tmp = lineAppend(tmp,&tmp_size,b,s);
+	for(int i = n; i < *size; i++){
+		tmp = lineAppend(tmp,&tmp_size,lb[i].buffer,lb[i].size);
+	}
+
+	if(lb){
+		free(lb);
+	}
+	
+	*size = tmp_size;
+	return tmp;
+}
+
+line_t* lineDesert(line_t* lb, int* size, int n){
+	if(n >= *size){
+		return lb;
+	}
+
+	for(int i = n; i < *size - 1; i++){
+		if(i == n){
+			free(lb[i].buffer);
+		}
+		lb[i].buffer = lb[i + 1].buffer;
+		lb[i].size = lb[i + 1].size;
+	}
+
+	(*size)--;
+
+	return lb;
+}
+
 // file context
 
 typedef struct Fctx_s {
@@ -472,6 +510,18 @@ int main(int argc, char** argv){
 						movecaret(&Main);
 					}
 				}
+				else{
+					if(Main.file){
+						if(filestr){
+							free(filestr);
+						}
+						filestr = NULL;
+						filestrlen = 0;
+						mode = MODE_MOVE;
+						Display(&Main);
+						movecaret(&Main);
+					}
+				}
 			break;
 
 			case MODE_EDIT:
@@ -508,7 +558,7 @@ int main(int argc, char** argv){
 					break;
 				}
 
-				printf("[%c %d]\n",c,c);
+				// printf("[%c %d]\n",c,c);
 				if(c == 5){ // Ctrl+E
 					mode = MODE_MOVE;
 					Display(&Main);
@@ -516,6 +566,22 @@ int main(int argc, char** argv){
 					break;
 				}
 
+				if(c == 14){ // Ctrl+N
+					Main.linebuf = lineInsert(Main.linebuf,&Main.linebuf_size,NULL,0,Main.linenum + 1);
+					
+					Display(&Main);
+					switch(editmode){
+						default:
+						case 0:
+							editcaret(&Main);
+						break;
+
+						case 1:
+							appendcaret(&Main);
+						break;
+					}
+					break;
+				}
 				if(c == 25){ // Ctrl+Y
 					if(editmode){
 						editmode = 0;
@@ -542,6 +608,11 @@ int main(int argc, char** argv){
 							&Main.linebuf[Main.linenum].size,
 							Main.position
 						);
+					}else{
+						// delete line
+						if(Main.linebuf_size > 1){
+							lineDesert(Main.linebuf,&Main.linebuf_size,Main.linenum);	
+						}
 					}
 					Display(&Main);
 					editcaret(&Main);

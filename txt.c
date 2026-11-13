@@ -401,7 +401,11 @@ int ShowContext(Fctx_t* ctx){
 		return ERROR_LINEBUFF; // Line Buffer Error
 	}
 
-	for(int i = ctx->linenum; (i < ctx->linebuf_size) && (i < ctx->linenum + ctx->lineheight); i++){
+	int base = ctx->linenum - (ctx->lineheight/2);
+	if(base < 0){
+		base = 0;
+	}
+	for(int i = base; (i < ctx->linebuf_size) && (i < base + ctx->lineheight); i++){
 		if(ctx->linebuf[i].buffer){
 			printf("%d: ",i+1);
 			int j = 0;
